@@ -78,5 +78,13 @@ private class OkrDashboardControllerTest {
         System.assert(userList.size() > 0, 'Active user collection query verified.');
         Test.stopTest();
     }
+        @isTest
+    static void testGetActiveYears() {
+        Test.startTest();
+        List<String> yearList = OkrDashboardController.getActiveYears();
+        System.assert(yearList.size() > 0, 'Active unique years extraction verified.');
+        Test.stopTest();
+    }
+
 
 }

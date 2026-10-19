@@ -70,4 +70,20 @@ public with sharing class OkrDashboardController {
             ORDER BY Name ASC
         ];
     }
+        
+    @AuraEnabled(cacheable=true)
+    public static List<String> getActiveYears() {
+        List<String> years = new List<String>();
+        
+        for (AggregateResult ar : [SELECT Year__c yr FROM Objective__c WHERE Year__c != null GROUP BY Year__c ORDER BY Year__c DESC]) {
+            years.add((String)ar.get('yr'));
+        }
+        
+        String currentYear = String.valueOf(Date.today().year());
+        if (!years.contains(currentYear)) {
+            years.add(currentYear);
+        }
+        return years;
+    }
+
 }

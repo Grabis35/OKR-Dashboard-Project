@@ -1,6 +1,8 @@
 <template>
+    <!-- Master Layout Wrapper -->
     <lightning-card title="OKR Progress Dashboard" icon-name="custom:custom62">
         
+        <!-- Action Dropdown Menu Button Header -->
         <div slot="actions">
             <lightning-button-menu alternative-text="Show Menu" menu-alignment="right" label="New..." variant="border-filled" onselect={handleMenuSelect}>
                 <lightning-menu-item value="new_objective" label="New Objective" icon-name="utility:add"></lightning-menu-item>
@@ -14,6 +16,7 @@
 
         <div class="slds-var-p-around_medium slds-border_bottom slds-theme_shade">
             <div class="slds-grid slds-wrap slds-gutters slds-grid_vertical-align-center">
+                <!-- Year Select Filtering Dropdown Field -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_3-of-12">
                     <lightning-combobox
                         name="yearFilter"
@@ -23,6 +26,7 @@
                         onchange={handleYearChange}>
                     </lightning-combobox>
                 </div>
+                <!-- Interactive User Filter Dropdown Selector -->
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_4-of-12">
                     <lightning-combobox
                         name="userFilter"
@@ -35,18 +39,21 @@
             </div>
         </div>
 
+        <!-- Main Dashboard Workspace -->
         <div class="slds-var-p-around_medium">
             <template if:true={error}>
                 <div class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error" role="alert">
-                    <h2>Failed to pull dashboard structures. Access configurations or metadata schema missing.</h2>
+                    <h2>Failed to pull dashboard structures.</h2>
                 </div>
             </template>
 
+            <!-- Objectives Render Loop Block -->
             <template if:true={okrData.length}>
                 <div class="slds-grid slds-wrap slds-gutters">
                     <template for:each={okrData} for:item="objective">
                         <div key={objective.Id} class="slds-col slds-size_1-of-1 slds-var-m-bottom_large">
                             <div class="slds-box slds-theme_default slds-box_small">
+                                <!-- Card Header Row Layout -->
                                 <div class="slds-grid slds-grid_vertical-align-center slds-var-m-bottom_medium slds-var-p-bottom_small slds-border_bottom">
                                     <div class="slds-col slds-no-flex slds-var-p-right_small">
                                         <lightning-icon icon-name="standard:goals" size="small"></lightning-icon>
@@ -55,9 +62,20 @@
                                         <h2 class="slds-text-heading_medium slds-truncate slds-text-title_bold">{objective.Name}</h2>
                                         <p class="slds-text-body_small slds-text-color_weak">Target Session: {objective.Year__c}</p>
                                     </div>
+                                    <!-- Contextual Action Button Inside Objective Card Header -->
+                                    <div class="slds-col slds-no-flex">
+                                        <lightning-button 
+                                            label="Add Key Result" 
+                                            icon-name="utility:add" 
+                                            variant="neutral" 
+                                            size="small"
+                                            data-id={objective.Id} 
+                                            onclick={openKeyResultModalFromCard}>
+                                        </lightning-button>
+                                    </div>
                                 </div>
 
-                                
+                                <!-- Nested Key Result Container Layout -->
                                 <div class="slds-grid slds-wrap slds-gutters">
                                     <template for:each={objective.Key_Results__r} for:item="kr">
                                         <div key={kr.Id} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-var-p-around_small">
@@ -68,21 +86,30 @@
                                                 </div>
                                                 
                                                 <div class="slds-var-m-vertical_small">
-                                                    <lightning-progress-bar 
-                                                        value={kr.progressPercentage} 
-                                                        size="large" 
-                                                        variant="base">
-                                                    </lightning-progress-bar>
+                                                    <lightning-progress-bar value={kr.progressPercentage} size="large" variant="base"></lightning-progress-bar>
                                                 </div>
 
+                                                <!-- Action validation wrapper block -->
                                                 <div class="slds-text-align_right slds-var-m-top_small">
-                                                    <lightning-button 
-                                                        label="Log Activity" 
-                                                        icon-name="utility:new" 
-                                                        variant="neutral"
-                                                        data-id={kr.Id} 
-                                                        onclick={openActivityModal}>
-                                                    </lightning-button>
+                                                    <!-- Displays only if the Key Result target has not been achieved -->
+                                                    <template if:false={kr.isCompleted}>
+                                                        <lightning-button 
+                                                            label="Log Activity" 
+                                                            icon-name="utility:new" 
+                                                            variant="neutral" 
+                                                            data-id={kr.Id}
+                                                            data-type={kr.Type__c} 
+                                                            onclick={openActivityModalFromCard}>
+                                                        </lightning-button>
+                                                    </template>
+                                                    
+                                                    <!-- Locked state fallback badge layout once target is achieved -->
+                                                    <template if:true={kr.isCompleted}>
+                                                        <span class="slds-badge slds-theme_success">
+                                                            <lightning-icon icon-name="utility:check" variant="inverse" size="x-small" class="slds-var-m-right_xx-small"></lightning-icon>
+                                                            Target Achieved
+                                                        </span>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>
@@ -94,18 +121,19 @@
                 </div>
             </template>
 
-            
+            <!-- Fallback panel for completely empty filter states -->
             <template if:false={okrData.length}>
                 <div class="slds-text-align_center slds-var-p-around_xx-large slds-illustration slds-illustration_large">
                     <div class="slds-text-longform slds-var-m-top_medium">
                         <h3 class="slds-text-heading_medium slds-text-color_weak">No mapped active OKR structures found.</h3>
-                        <p class="slds-text-color_weak">Modify your tracking selection parameters or create a new objective to begin.</p>
                     </div>
                 </div>
             </template>
         </div>
     </lightning-card>
 
+
+     <!-- Quick Action Modal Block: Initialize New Objective -->
     <template if:true={isObjectiveModalOpen}>
         <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
@@ -113,14 +141,7 @@
                     <h2 class="slds-modal__title slds-hyphenate">Initialize Dashboard Objective</h2>
                 </header>
                 <div class="slds-modal__content slds-var-p-around_medium">
-                    <lightning-input 
-                        type="text" 
-                        label="Objective Name / Corporate Goal Statement" 
-                        data-id="objectiveName" 
-                        value={newObjectiveName}
-                        onchange={handleFormInputChange} 
-                        required>
-                    </lightning-input>
+                    <lightning-input type="text" label="Objective Name / Corporate Goal Statement" data-id="objectiveName" value={newObjectiveName} onchange={handleFormInputChange} required></lightning-input>
                 </div>
                 <footer class="slds-modal__footer">
                     <lightning-button label="Cancel" variant="neutral" onclick={closeModals} class="slds-var-m-right_x-small"></lightning-button>
@@ -131,6 +152,7 @@
         <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
     </template>
 
+    <!-- Key Result Action Modal Block -->
     <template if:true={isKeyResultModalOpen}>
         <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
@@ -138,7 +160,10 @@
                     <h2 class="slds-modal__title slds-hyphenate">Map New Key Result Milestone</h2>
                 </header>
                 <div class="slds-modal__content slds-var-p-around_medium">
-                    <lightning-input type="text" label="Key Result Name / Milestone Metric Goal" data-id="krName" value={newKeyResultName} onchange={handleFormInputChange} required></lightning-input>
+                    <template if:true={isGlobalKeyResultAction}>
+                        <lightning-combobox name="krParentSelect" label="Target Corporate Objective" value={activeObjectiveId} options={objectiveOptions} data-id="krParentObj" onchange={handleFormInputChange} required></lightning-combobox>
+                    </template>
+                    <lightning-input type="text" label="Key Result Name / Milestone Metric Goal" data-id="krName" value={newKeyResultName} onchange={handleFormInputChange} class="slds-var-m-top_small" required></lightning-input>
                     <lightning-combobox name="krTypeSelect" label="Milestone Tracking Metric Type" value={newKeyResultType} options={krTypeOptions} data-id="krType" onchange={handleFormInputChange} class="slds-var-m-top_small"></lightning-combobox>
                     <lightning-input type="number" label="Target Goal Amount" data-id="krTarget" value={newKeyResultTarget} onchange={handleFormInputChange} class="slds-var-m-top_small" required></lightning-input>
                 </div>
@@ -151,6 +176,7 @@
         <div class="slds-backdrop slds-backdrop_open" role="presentation"></div>
     </template>
 
+    <!-- Dynamic Activity Link Modal Block: Create Surveys, Reviews, etc. -->
     <template if:true={isActivityModalOpen}>
         <section role="dialog" tabindex="-1" aria-modal="true" class="slds-modal slds-fade-in-open">
             <div class="slds-modal__container">
@@ -158,23 +184,11 @@
                     <h2 class="slds-modal__title slds-hyphenate">Log Metric Activity Target</h2>
                 </header>
                 <div class="slds-modal__content slds-var-p-around_medium">
-                    <lightning-combobox
-                        name="activityType"
-                        label="Activity Target Classification Type"
-                        value={selectedActivityType}
-                        options={activityTypeOptions}
-                        data-id="activityType"
-                        onchange={handleFormInputChange}>
-                    </lightning-combobox>
-                    <lightning-input 
-                        type="text" 
-                        label="Activity Reference Label / Record Name" 
-                        data-id="activityName" 
-                        value={activityRecordName}
-                        onchange={handleFormInputChange} 
-                        class="slds-var-m-top_small"
-                        required>
-                    </lightning-input>
+                    <template if:true={isGlobalActivityAction}>
+                        <lightning-combobox name="krTargetSelect" label="Target Corporate Key Result" value={activeKeyResultId} options={availableEligibleKeyResults} data-id="activityTargetKr" onchange={handleFormInputChange} required></lightning-combobox>
+                    </template>
+                    <lightning-combobox name="activityType" label="Activity Target Classification Type" value={selectedActivityType} options={activityTypeOptions} data-id="activityType" onchange={handleFormInputChange} class="slds-var-m-top_small" disabled={isDropdownDisabled}></lightning-combobox>
+                    <lightning-input type="text" label="Activity Reference Label / Record Name" data-id="activityName" value={activityRecordName} onchange={handleFormInputChange} class="slds-var-m-top_small" required></lightning-input>
                 </div>
                 <footer class="slds-modal__footer">
                     <lightning-button label="Cancel" variant="neutral" onclick={closeModals} class="slds-var-m-right_x-small"></lightning-button>
